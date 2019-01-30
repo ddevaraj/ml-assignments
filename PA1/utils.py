@@ -84,9 +84,10 @@ def reduced_error_prunning(decisionTree, X_test, y_test):
                 #                for x in range(len(X_test))]
                 y_pred = decisionTree.predict(X_test)
                 accuracy = accuracy_score(y_pred, y_test)
-                if accuracy < init_accuracy:
+                if accuracy <= init_accuracy:
                     traverse(decisionTree.root_node, node, True)
                 else:
+                    node.children = []
                     init_accuracy = accuracy
 
 
@@ -211,12 +212,12 @@ def model_selection_with_transformation(distance_funcs, scaling_classes, Xtrain,
     best_k, best_func, best_scaler, best_f1_score = 0, "", "", -1
     for scaler_name, scaler in scaling_classes.items():
         for name, func in distance_funcs.items():
-            print(scaler_name, name, distance_funcs[name], func)
+            # print(scaler_name, name, distance_funcs[name], func)
             # best_f1_score, k_val = -1, 0
             scale_class = scaler()
             scale_train = scale_class(Xtrain)
             scale_val = scale_class(Xval)
-            for k in range(1, 32, 2):
+            for k in range(1, 30, 2):
                 model = KNN(k=k, distance_function=func)
                 model.train(scale_train, ytrain)
                 val_f1 = f1_score(yval, model.predict(scale_val))
@@ -224,11 +225,16 @@ def model_selection_with_transformation(distance_funcs, scaling_classes, Xtrain,
                     best_f1_score, best_k = val_f1, k
                     best_func = name
                     best_scaler = scaler_name
+                    best_scale_class = scale_class
     #             print('best_func, best_k, best f1, val', name, best_k, k,
     #                   best_f1_score, val_f1)
     #     print('**best_func, best_k, best_scale', best_func, best_k, best_scaler)
     # print('****best_func, best_k, best_scale', best_func, best_k, best_scaler)
+
+    # best_scale_class = scaling_classes[best_scaler]
+    scale_train = best_scale_class(Xtrain)
     best_model = KNN(k=best_k, distance_function=distance_funcs[best_func])
+    # scale_val = scale_class(Xval)
     best_model.train(scale_train, ytrain)
     return best_model, best_k, best_func, best_scaler
 

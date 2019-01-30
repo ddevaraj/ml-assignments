@@ -61,7 +61,7 @@ class KNN:
 
         for j in sorted_dist:
             k_neighbor_index.append(point_index[j])
-        # print(k_neighbor_index)
+
         return k_neighbor_index
 
 
