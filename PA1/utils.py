@@ -1,7 +1,6 @@
 import numpy as np
 from typing import List
 from hw1_knn import KNN
-import collections
 
 # TODO: Information Gain function
 def Information_Gain(S, branches):
@@ -10,11 +9,6 @@ def Information_Gain(S, branches):
     # return: float
     branches = np.array(branches)
     total_ele = np.sum(branches)
-    # # entropy_child = np.sum([(branches[i]/total_ele[i]*np.log2(branches[i]/total_ele[i]) for i in range(len(total_ele)))])
-    # entropy_child = [(branches[i] / total_ele[i]) * np.log2(branches[i] / total_ele[i] if branches[i]>0 else 0) for i in range(len(total_ele)) if total_ele[i]!=0]
-    # entropy = np.sum([(entropy_child[i] * (total_ele[i]/np.sum(branches))) for i in range(len(entropy_child))])
-    # info_gain = S+entropy
-    # return info_gain
     total_in_branch = np.sum(branches, axis=1)
     prob_branch = total_in_branch / total_ele
     entropy = (branches.T / total_in_branch).T
@@ -28,16 +22,17 @@ def Information_Gain(S, branches):
 def tree_traversal(root):
     if not root:
         return []
-    queue = collections.deque([root])
+    queue = []
+    queue.append(root)
     res = []
     while len(queue):
-        pred_class = []
+        pred_level = []
         for i in range(len(queue)):
-            node = queue.popleft()
-            pred_class.append(node)
+            node = queue.pop()
+            pred_level.append(node)
             for child in node.children:
                 queue.append(child)
-            res.append(pred_class)
+            res.append(pred_level)
     return res
 
 
@@ -53,12 +48,9 @@ def traverse(node, search_node, is_split):
         traverse(child, search_node, is_split)
 
 
-def accuracy_score(y_pred, y_test):
-    # print(y_pred, y_test)
-    print("***", len(y_pred), len(y_test))
+def compute_accuracy(y_pred, y_test):
     correct_count = sum([x==y for x, y in zip(y_pred, y_test)])
     score = correct_count/len(y_pred)
-    print('score', score)
     return score
 
 
@@ -69,26 +61,19 @@ def reduced_error_prunning(decisionTree, X_test, y_test):
     # # y_test: List
     no_levels = tree_traversal(decisionTree.root_node)
     no_levels.reverse()
-    # val_test = [[X_test[x][y] for y in range(len(X_test[0]))] for x in range(len(X_test))]
-    init_accuracy = accuracy_score(decisionTree.predict(X_test), y_test)
+    init_accuracy = compute_accuracy(decisionTree.predict(X_test), y_test)
 
     for level in no_levels:
         for node in level:
-            # val_test = [[X_test[x][y] for y in range(len(X_test[0]))] for x in
-            #             range(len(X_test))]
-            # init_accuracy = compute_accuracy(decisionTree.predict(val_test),
-            #                                  y_test)
             if node.splittable:
                 traverse(decisionTree.root_node, node, False)
-                # val_test = [[X_test[x][y] for y in range(len(X_test[0]))]
-                #                for x in range(len(X_test))]
                 y_pred = decisionTree.predict(X_test)
-                accuracy = accuracy_score(y_pred, y_test)
-                if accuracy <= init_accuracy:
-                    traverse(decisionTree.root_node, node, True)
-                else:
+                accuracy = compute_accuracy(y_pred, y_test)
+                if accuracy > init_accuracy:
                     node.children = []
                     init_accuracy = accuracy
+                else:
+                    traverse(decisionTree.root_node, node, True)
 
 
 # print current tree
@@ -114,27 +99,6 @@ def print_tree(decisionTree, node=None, name='branch 0', indent='', deep=0):
 
 
 def f1_score(real_labels: List[int], predicted_labels: List[int]) -> float:
-    # assert len(real_labels) == len(predicted_labels)
-    # tp,fp,tn,fn = 0,0,0,0
-    # print('inside f1')
-    # for i in range(len(real_labels)):
-    #     if predicted_labels[i] == 1 and real_labels[i] == 1:
-    #         tp += 1
-    #     elif predicted_labels[i] == 1 and real_labels[i] == 0:
-    #         fp += 1
-    #     elif predicted_labels[i] == 0 and real_labels[i] == 0:
-    #         tn += 1
-    #     elif predicted_labels[i] == 0 and real_labels[i] == 1:
-    #         fn += 1
-    # print('tp', tp,fp,fn)
-    # if tp == fp == fn == 0:
-    #     return 0
-    # precision = tp/(tp + fp)
-    # recall = tp/(tp + fn)
-    # f1 = (2 * precision * recall)/(precision+recall)
-    # print('precision,recal', precision, recall)
-    # return f1
-    # print('inside f1')
     assert len(real_labels) == len(predicted_labels)
 
     tp = sum([x == 1 and y == 1 for x, y in zip(real_labels, predicted_labels)])
@@ -147,9 +111,9 @@ def f1_score(real_labels: List[int], predicted_labels: List[int]) -> float:
 
 
 def euclidean_distance(point1: List[float], point2: List[float]) -> float:
-    dist = [(p - q) ** 2 for p, q in zip(point1, point2)]
-    dist = np.sqrt(sum(dist))
-    return dist
+    distance = [(p - q) ** 2 for p, q in zip(point1, point2)]
+    distance = np.sqrt(sum(distance))
+    return distance
 
 
 def inner_product_distance(point1: List[float], point2: List[float]) -> float:
@@ -158,9 +122,9 @@ def inner_product_distance(point1: List[float], point2: List[float]) -> float:
     return distance
 
 def gaussian_kernel_distance(point1: List[float], point2: List[float]) -> float:
-    dist = [(p - q) ** 2 for p, q in zip(point1, point2)]
-    dist = -0.5 * sum(dist)
-    return -np.exp(dist)
+    distance = [(p - q) ** 2 for p, q in zip(point1, point2)]
+    distance = -0.5 * sum(distance)
+    return -np.exp(distance)
 
 
 def cosine_sim_distance(point1: List[float], point2: List[float]) -> float:
@@ -181,8 +145,6 @@ def model_selection_without_normalization(distance_funcs, Xtrain, ytrain, Xval, 
     # return best_func: best function choosed for best_model
     best_k, best_func, best_f1_score = 0, "", -1
     for name, func in distance_funcs.items():
-        # print(name, distance_funcs[name], func)
-        # best_f1_score, k_val = -1, 0
         for k in range(1,30,2):
             model = KNN(k=k, distance_function=func)
             model.train(Xtrain, ytrain)
@@ -190,9 +152,6 @@ def model_selection_without_normalization(distance_funcs, Xtrain, ytrain, Xval, 
             if val_f1 > best_f1_score:
                 best_f1_score, best_k = val_f1, k
                 best_func = name
-    #         print('best_func, best_k, best f1, val', name, best_k, k, best_f1_score, val_f1)
-    #     print('**best_func, best_k', best_func, best_k)
-    # print('****best_func, best_k', best_func, best_k)
     best_model = KNN(k=best_k, distance_function=distance_funcs[best_func])
     best_model.train(Xtrain, ytrain)
     return best_model, best_k, best_func
@@ -217,7 +176,7 @@ def model_selection_with_transformation(distance_funcs, scaling_classes, Xtrain,
             scale_class = scaler()
             scale_train = scale_class(Xtrain)
             scale_val = scale_class(Xval)
-            for k in range(1, 30, 2):
+            for k in range(1, 32, 2):
                 model = KNN(k=k, distance_function=func)
                 model.train(scale_train, ytrain)
                 val_f1 = f1_score(yval, model.predict(scale_val))
@@ -226,15 +185,8 @@ def model_selection_with_transformation(distance_funcs, scaling_classes, Xtrain,
                     best_func = name
                     best_scaler = scaler_name
                     best_scale_class = scale_class
-    #             print('best_func, best_k, best f1, val', name, best_k, k,
-    #                   best_f1_score, val_f1)
-    #     print('**best_func, best_k, best_scale', best_func, best_k, best_scaler)
-    # print('****best_func, best_k, best_scale', best_func, best_k, best_scaler)
-
-    # best_scale_class = scaling_classes[best_scaler]
     scale_train = best_scale_class(Xtrain)
     best_model = KNN(k=best_k, distance_function=distance_funcs[best_func])
-    # scale_val = scale_class(Xval)
     best_model.train(scale_train, ytrain)
     return best_model, best_k, best_func, best_scaler
 
@@ -249,41 +201,16 @@ class NormalizationScaler:
         if the input features = [[3, 4], [1, -1], [0, 0]],
         the output should be [[0.6, 0.8], [0.707107, -0.707107], [0, 0]]
         """
-        # normalized_vector = []
-        # for feature in features:
-        #     if all(item == 0 for item in feature):
-        #         normalized_vector.append(feature)
-        #     else:
-        #         den = [x*x for x in feature]
-        #         den = np.sqrt(den)
-        #         vector = [val / den for val in feature]
-        #         normalized_vector.append(vector)
-        # return normalized_vector
-        # norm_features = []
-        # for x in features:
-        #     sum = 0
-        #     norm_feature_vec = []
-        #     # if all the features in x are 0, then all_zeroes variable would store True else False
-        #     all_zeroes = all(ft == 0 for ft in x)
-        #     # below if condition avoids feature vector with zeroes from being normalized
-        #     if (not all_zeroes):
-        #         for i in range(len(x)):
-        #             sum += x[i] * x[i]
-        #         for i in range(len(x)):
-        #             norm_feature_vec.append(x[i] / np.sqrt(sum))
-        #     norm_features.append(norm_feature_vec)
-        # return norm_features
-
-        normalized = []
+        normalized_array = []
         for sample in features:
             if all(x == 0 for x in sample):
-                normalized.append(sample)
+                normalized_array.append(sample)
             else:
                 denom = float(np.sqrt(inner_product_distance(sample, sample)))
                 sample_normalized = [x / denom for x in sample]
-                normalized.append(sample_normalized)
+                normalized_array.append(sample_normalized)
 
-        return normalized
+        return normalized_array
 
 
 class MinMaxScaler:
