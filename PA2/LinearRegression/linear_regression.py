@@ -23,24 +23,24 @@ def mean_square_error(w, X, y):
     #####################################################
     # TODO 1: Fill in your code here #
     #####################################################
-    err = None
+    err = np.square(np.subtract(np.dot(X,w),y)).mean()
     return err
 
 ###### Q1.2 ######
 def linear_regression_noreg(X, y):
-  """
-  Compute the weight parameter given X and y.
-  Inputs:
-  - X: A numpy array of shape (num_samples, D) containing feature.
-  - y: A numpy array of shape (num_samples, ) containing label
-  Returns:
-  - w: a numpy array of shape (D, )
-  """
-  #####################################################
-  #	TODO 2: Fill in your code here #
-  #####################################################		
-  w = None
-  return w
+    """
+    Compute the weight parameter given X and y.
+    Inputs:
+    - X: A numpy array of shape (num_samples, D) containing feature.
+    - y: A numpy array of shape (num_samples, ) containing label
+    Returns:
+    - w: a numpy array of shape (D, )
+    """
+    #####################################################
+    #	TODO 2: Fill in your code here #
+    #####################################################
+    w = np.dot(np.linalg.inv(np.dot(X.transpose(), X)), np.dot(X.transpose(), y))
+    return w
 
 ###### Q1.3 ######
 def linear_regression_invertible(X, y):
@@ -55,7 +55,11 @@ def linear_regression_invertible(X, y):
     #####################################################
     # TODO 3: Fill in your code here #
     #####################################################
-    w = None
+    xTx = np.dot(X.transpose(),X)
+    while np.absolute(np.linalg.eigvals(xTx)).min() < pow(10, -5):
+        lambdaI = np.multiply(pow(10,-1),np.identity(xTx.shape[0]))
+        xTx = np.add(xTx, lambdaI)
+    w = np.dot(np.linalg.inv(xTx), np.dot(X.transpose(), y))
     return w
 
 
@@ -73,8 +77,9 @@ def regularized_linear_regression(X, y, lambd):
   #####################################################
   # TODO 4: Fill in your code here #
   #####################################################		
-    w = None
+    w = np.dot(np.linalg.inv(np.add(np.dot(X.transpose(), X),np.multiply(lambd,np.identity(X.shape[1])))), np.dot(X.transpose(),y))
     return w
+
 
 ###### Q1.5 ######
 def tune_lambda(Xtrain, ytrain, Xval, yval):
@@ -90,8 +95,18 @@ def tune_lambda(Xtrain, ytrain, Xval, yval):
     """
     #####################################################
     # TODO 5: Fill in your code here #
-    #####################################################		
-    bestlambda = None
+    #####################################################
+    min_mse = float('inf')
+    lambds = [-19,-18,-17,-16,-15,-14,-13,-12,-11,-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
+    bestlambda = 0
+    for power in lambds:
+        lambd = pow(10,power)
+        w = regularized_linear_regression(Xtrain, ytrain, lambd)
+        mse = mean_square_error(w, Xval, yval)
+        if mse < min_mse:
+            min_mse = mse
+            bestlambda = lambd
+        # lambds *= 10
     return bestlambda
     
 
@@ -107,8 +122,13 @@ def mapping_data(X, power):
     """
     #####################################################
     # TODO 6: Fill in your code here #
-    #####################################################		
-    
+    #####################################################
+    Y = np.array(X)
+
+    for i in range(2,power+1):
+        # print('in for')
+        # print(X.shape)
+        X = np.append(X, np.power(Y,i), axis=1)
     return X
 
 

@@ -30,12 +30,20 @@ def binary_train(X, y, loss="perceptron", w0=None, b0=None, step_size=0.5, max_i
     if b0 is not None:
         b = b0
 
+    w = np.insert(w,0,b)
+    ones = np.ones((N,1))
+    X = np.hstack((ones,X))
+    # X = np.append(X,ones,1)
+
     if loss == "perceptron":
         ############################################
         # TODO 1 : Edit this if part               #
         #          Compute w and b here            #
-        w = np.zeros(D)
-        b = 0
+        for i in range(max_iterations):
+            xy = np.dot(X.transpose(), y)
+            activation = np.where(y*np.dot(w.transpose(), X.transpose()) <=0, 0,1)
+            print(activation.shape)
+            # w += (step_size * gradient)
         ############################################
         
 
@@ -43,14 +51,19 @@ def binary_train(X, y, loss="perceptron", w0=None, b0=None, step_size=0.5, max_i
         ############################################
         # TODO 2 : Edit this if part               #
         #          Compute w and b here            #
-        w = np.zeros(D)
-        b = 0
+        for i in range(max_iterations):
+            z = np.dot(X, w)
+            sig = sigmoid(z)
+            gradient = np.dot(np.transpose(X), (sig - y)) / len(y)
+            w -= (step_size * gradient)
         ############################################
         
 
     else:
         raise "Loss Function is undefined."
 
+    b = w[0]
+    w = w[1:]
     assert w.shape == (D,)
     return w, b
 
@@ -67,7 +80,7 @@ def sigmoid(z):
     ############################################
     # TODO 3 : Edit this part to               #
     #          Compute value                   #
-    value = z
+    value = 1/(1+np.exp(-z))
     ############################################
     
     return value
@@ -86,20 +99,23 @@ def binary_predict(X, w, b, loss="perceptron"):
     - preds: N dimensional vector of binary predictions: {0, 1}
     """
     N, D = X.shape
+    w = np.insert(w, 0, b)
+    ones = np.ones((N, 1))
+    X = np.hstack((ones, X))
+
     
     if loss == "perceptron":
         ############################################
         # TODO 4 : Edit this if part               #
         #          Compute preds                   #
-        preds = np.zeros(N)
+        preds = np.where(np.dot(X,w)>0,1,0)
         ############################################
-        
 
     elif loss == "logistic":
         ############################################
         # TODO 5 : Edit this if part               #
         #          Compute preds                   #
-        preds = np.zeros(N)
+        preds = np.where(sigmoid(np.dot(X, w))>0.5,1,0)
         ############################################
         
 
