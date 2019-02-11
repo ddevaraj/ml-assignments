@@ -28,6 +28,8 @@ def run_binary():
             w, b = sol.binary_train(X_train, y_train, loss=loss_type)
             train_preds = sol.binary_predict(X_train, w, b, loss=loss_type)
             preds = sol.binary_predict(X_test, w, b, loss=loss_type)
+            print("w,b", w,b)
+            print("pred", preds)
             print(loss_type + ' train acc: %f, test acc: %f' 
                 %(accuracy_score(y_train, train_preds), accuracy_score(y_test, preds)))
         print()
