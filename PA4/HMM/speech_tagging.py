@@ -167,6 +167,16 @@ def speech_tagging(test_data, model, tags):
 	tagging = []
 	###################################################
 	# Edit here
+	# print(test_data[0].tags)
+	for i in range(len(test_data)):
+		Osequence = test_data[i].words
+		for word in Osequence:
+			if word not in model.obs_dict:
+				model.obs_dict[word] = len(model.obs_dict)
+				model.B = np.insert(model.B, len(model.B[0]), 10**-6, axis=1)
+		path = model.viterbi(Osequence)
+		tagging.append(path)
+	# print(tagging)
 	###################################################
 	return tagging
 

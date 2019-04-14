@@ -123,40 +123,40 @@ class HMM:
         path = []
         ###################################################
         # Edit here
-        # obs = [self.obs_dict[i] for i in Osequence]
-        # S = len(self.pi)
-        # L = len(Osequence)
-        # delta = np.zeros([S, L])
-        # paths = np.zeros([S, L], dtype="int")
-        #
-        # for s in range(S):
-        #     delta[s, 0] = self.pi[s] * self.B[s, obs[0]]
-        #     paths[s, 0] = 0
-        #
-        # for t in range(1, L):
-        #     for s in range(S):
-        #         delta_s = [delta[s_prime, t - 1] * self.A[s_prime, s] for s_prime in
-        #                   range(S)]
-        #         # print('deltas', delta_s)
-        #         delta[s, t] = max(delta_s) * self.B[s, obs[t]]
-        #         # print('delta',delta)
-        #         paths[s, t] = np.argmax(delta_s)
-        # # print('paths', paths)
-        # last_state = np.argmax(delta[:,-1])
-        # path.append(last_state)
-        # # print('path', path)
-        # for t in range(L-2,-1,-1):
-        #     path.append(paths[path[-1], t+1])
-        #
-        # # print(self.state_dict, path)
-        # final_path = []
-        # def get_key(val):
-        #     for key, value in self.state_dict.items():
-        #         if val == value:
-        #             return key
-        # for index in path:
-        #     final_path.append(get_key(index))
-        # # print(final_path)
-        # ###################################################
-        # return final_path[::-1]
-        return path
+        obs = [self.obs_dict[i] for i in Osequence]
+        S = len(self.pi)
+        L = len(Osequence)
+        delta = np.zeros([S, L])
+        paths = np.zeros([S, L], dtype="int")
+
+        for s in range(S):
+            delta[s, 0] = self.pi[s] * self.B[s, obs[0]]
+            paths[s, 0] = 0
+
+        for t in range(1, L):
+            for s in range(S):
+                delta_s = [delta[s_prime, t - 1] * self.A[s_prime, s] for s_prime in
+                          range(S)]
+                # print('deltas', delta_s)
+                delta[s, t] = max(delta_s) * self.B[s, obs[t]]
+                # print('delta',delta)
+                paths[s, t] = np.argmax(delta_s)
+        # print('paths', paths)
+        last_state = np.argmax(delta[:,-1])
+        path.append(last_state)
+        # print('path', path)
+        for t in range(L-2,-1,-1):
+            path.append(paths[path[-1], t+1])
+
+        # print(self.state_dict, path)
+        final_path = []
+        def get_key(val):
+            for key, value in self.state_dict.items():
+                if val == value:
+                    return key
+        for index in path:
+            final_path.append(get_key(index))
+        # print(final_path)
+        ###################################################
+        return final_path[::-1]
+        # return path

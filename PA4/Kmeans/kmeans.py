@@ -1,14 +1,6 @@
 import numpy as np
 
 
-def compute_distance(x, center, center_list):
-    dist = []
-    for i in range(len(x)):
-        if i not in center_list:
-            dist.append(np.sum((x[i] - x[center])**2))
-    return dist
-
-
 def get_k_means_plus_plus_center_indices(n, n_cluster, x, generator=np.random):
     '''
 
@@ -29,10 +21,15 @@ def get_k_means_plus_plus_center_indices(n, n_cluster, x, generator=np.random):
     try:
         centers = []
         centers.append(generator.randint(n-1))
-        for i in range(n_cluster-1):
-            distance = compute_distance(x, centers[len(centers)-1], centers)
-            prob = np.divide(distance, np.sum(distance))
-            centers.append(np.argmax(prob))
+        points = np.asarray(x)
+        np.delete(points, centers[-1])
+        for k in range(n_cluster-1):
+            distances = np.sum((points - x[centers[k]])**2, axis=1)
+            prob = distances / np.sum(distances)
+            nxt_center = np.argmax(prob)
+            centers.append(nxt_center)
+            np.delete(points, nxt_center)
+
     except:
         raise Exception(
                  'Implement get_k_means_plus_plus_center_indices function in Kmeans.py')
@@ -92,24 +89,25 @@ class KMeans():
         # - Update means and membership until convergence or until you have made self.max_iter updates.
         # - return (means, membership, number_of_updates)
         means = x[self.centers,:]
-        membership = np.zeros(N)
         j = np.power(10,10)
         num_updates = 0
-        for i in range(0, self.max_iter):
-            distances = np.sum((x - means[:, np.newaxis]) ** 2, axis=2)
+
+        for i in range(self.max_iter):
+            num_updates += 1
+            distances = []
+            for k in range(self.n_cluster):
+                dist = np.sum((x-means[k])**2, axis=1)
+                distances.append(dist)
             membership = np.argmin(distances, axis=0)
-            distortion = np.sum(
-                [np.sum((x[membership == k] - means[k]) ** 2) for k in
-                 range(self.n_cluster)])
+            distortion = np.sum(np.min(distances, axis=0))
             if np.absolute(j - distortion) <= self.e:
                 break
-            j = distortion
-            means_new = np.array([np.mean(x[membership == k], axis=0) for k in
-                              range(self.n_cluster)])
-            index = np.where(np.isnan(means_new))
-            means_new[index] = means[index]
-            means = means_new
-            num_updates += 1
+            else:
+                j = distortion
+                for c in range(self.n_cluster):
+                    means[c] = np.mean(x[membership == c], axis=0)
+
+
         self.max_iter = num_updates
         centroids = means
         y = membership
@@ -172,7 +170,7 @@ class KMeansClassifier():
         # - assign labels to centroid_labels
 
         kmeans = KMeans(self.n_cluster, self.max_iter, self.e, self.generator)
-        centroids, membership, num_updates = kmeans.fit(x, centroid_func)
+        centroids, membership, num_updates = kmeans.fit(x)
         member_votes = [{} for i in range(len(centroids))]
         for i in range(len(membership)):
             if y[i] not in member_votes[membership[i]]:
@@ -183,7 +181,8 @@ class KMeansClassifier():
         for c in member_votes:
             if not c:
                 centroid_labels.append(0)
-            centroid_labels.append(max(c, key=c.get))
+            else:
+                centroid_labels.append(max(c, key=c.get))
         centroid_labels = np.array(centroid_labels)
 
 
